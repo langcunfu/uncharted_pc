@@ -120,6 +120,10 @@ jobs:
           echo "fonts=[$(cygpath -w "$PWD/launcher/fonts")]"
           ls -d launcher/fonts launcher/covers
           mkdir -p out
+          # launcher/uncharted.png 被 .gitignore 忽略，需先用 Pillow 画出来
+          "$WINPYTHON" -m pip install -q --disable-pip-version-check pillow
+          "$WINPYTHON" packaging/windows/make_uncharted_icon.py launcher/uncharted.ico launcher/uncharted.png
+          ls -l launcher/uncharted.png
           /usr/bin/bash -x packaging/windows/package.sh 2>&1 | tee out/package-stdout.log
 
       - name: 读取版本号
