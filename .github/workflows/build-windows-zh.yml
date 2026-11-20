@@ -51,8 +51,9 @@ jobs:
           msystem: CLANG64
           update: true
           install: >-
-            git patch
+            git patch gawk
             mingw-w64-clang-x86_64-toolchain
+            mingw-w64-clang-x86_64-llvm-tools
             mingw-w64-clang-x86_64-cmake
             mingw-w64-clang-x86_64-ninja
             mingw-w64-clang-x86_64-pkgconf
@@ -97,8 +98,10 @@ jobs:
           /usr/bin/bash --version 2>&1 | head -1 || true
           ls -l build.sh msys2-env.sh packaging/windows/package.sh
           # 防止 actions/checkout 在 Windows 上把脚本转成 CRLF（会让 bash 报 127 / bad interpreter）
+          for t in awk gawk clang clang++ llvm-profdata llvm-strip cmp; do command -v "$t" >/dev/null && echo "ok  $t" || echo "MISSING $t"; done
+          echo '#include <version>' | clang++ -x c++ -dM -E - 2>&1 | grep -m1 _LIBCPP_VERSION || echo "libc++ probe failed"
           sed -i 's/\r$//' build.sh msys2-env.sh packaging/windows/package.sh
-          /usr/bin/bash -x build.sh
+          /usr/bin/bash build.sh
 
       - name: 冻结启动器并打包
         shell: msys2 {0}
