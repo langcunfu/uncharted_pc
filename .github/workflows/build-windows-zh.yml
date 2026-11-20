@@ -121,9 +121,26 @@ jobs:
           mkdir -p /c/msys64/clang64/include
           [[ -d /c/msys64/clang64/include/vulkan ]] || cp -r /clang64/include/vulkan /c/msys64/clang64/include/
           [[ -d /c/msys64/clang64/include/vk_video ]] || cp -r /clang64/include/vk_video /c/msys64/clang64/include/
-          export DLSS_SDK_ROOT=/tmp/DLSS
           if [[ -x "/c/Program Files/CMake/bin/cmake.exe" ]]; then export CMAKE_EXE="/c/Program Files/CMake/bin/cmake.exe"; fi
-          bash packaging/windows/build_dlss.sh
+          # runner 上的 VS 版本不一定是 17，探测后改一份临时脚本用（不动上游文件）
+          vswhere="/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
+          gen="Visual Studio 17 2022"
+          if [[ -x "$vswhere" ]]; then
+              "$vswhere" -all -prerelease -property displayName || true
+              ver=$("$vswhere" -latest -prerelease -property installationVersion 2>/dev/null || true)
+              echo "vswhere version: $ver"
+              case "$ver" in
+                  18.*) gen="Visual Studio 18 2026" ;;
+                  17.*) gen="Visual Studio 17 2022" ;;
+              esac
+          else
+              echo "vswhere 不存在"
+          fi
+          echo "generator: $gen"
+          cp packaging/windows/build_dlss.sh packaging/windows/.build_dlss_ci.sh
+          sed -i "s/Visual Studio 17 2022/$gen/" packaging/windows/.build_dlss_ci.sh
+          DLSS_SDK_ROOT=/tmp/DLSS bash packaging/windows/.build_dlss_ci.sh
+          rm -f packaging/windows/.build_dlss_ci.sh
           ls -l out/nvngx_dlss.dll out/nvngx_dlssg.dll out/bbport_dlss.dll
 
       - name: 冻结启动器并打包
