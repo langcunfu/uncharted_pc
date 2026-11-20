@@ -13,7 +13,7 @@ class LauncherTranslationTests(unittest.TestCase):
     def test_each_language_translates_play(self):
         expected = {
             'es': 'Jugar', 'pt': 'Jogar', 'fr': 'Jouer', 'de': 'Spielen',
-            'it': 'Gioca', 'ja': 'プレイ',
+            'it': 'Gioca', 'zh': '开始游戏', 'ja': 'プレイ',
         }
         for language, translation in expected.items():
             with self.subTest(language=language):
@@ -24,17 +24,20 @@ class LauncherTranslationTests(unittest.TestCase):
         self.assertEqual(uncharted_i18n.translate('en', 'Play'), 'Play')
 
     def test_automatic_language_uses_windows_locale(self):
-        for language in ('es', 'pt', 'fr', 'de', 'it', 'ja'):
+        for language in ('es', 'pt', 'fr', 'de', 'it', 'zh', 'ja'):
             with self.subTest(language=language), patch.object(
                     uncharted_i18n.locale, 'getlocale', return_value=(f'{language}_XX', 'UTF-8')):
                 self.assertEqual(uncharted_i18n.language_code(''), language)
         with patch.object(uncharted_i18n.locale, 'getlocale', return_value=('ko_KR', 'UTF-8')):
             self.assertEqual(uncharted_i18n.language_code(''), 'en')
+        with patch.object(uncharted_i18n.locale, 'getlocale',
+                          return_value=('Chinese (Simplified)_China', '936')):
+            self.assertEqual(uncharted_i18n.language_code(''), 'zh')
 
     def test_launcher_offers_selected_languages(self):
         self.assertEqual(
             [code for code, _name in uncharted_i18n.LANGUAGES],
-            ['', 'en', 'es', 'pt', 'fr', 'de', 'it', 'ja'],
+            ['', 'en', 'es', 'pt', 'fr', 'de', 'it', 'zh', 'ja'],
         )
 
     def test_interface_language_help_is_translated(self):
@@ -47,7 +50,7 @@ class LauncherTranslationTests(unittest.TestCase):
                  if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
                  and node.func.id == '_' and node.args
                  and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str)}
-        for language in ('es', 'pt', 'fr', 'de', 'it', 'ja'):
+        for language in ('es', 'pt', 'fr', 'de', 'it', 'zh', 'ja'):
             with self.subTest(language=language):
                 self.assertEqual(texts - set(uncharted_i18n.TRANSLATIONS[language]), set())
 

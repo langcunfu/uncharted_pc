@@ -3,6 +3,7 @@ import locale
 
 from bbport_lang import table as shared_translations
 from uncharted_i18n_extra import EXTRA_TRANSLATIONS
+from uncharted_i18n_zh import ZH_TRANSLATIONS
 
 
 LANGUAGES = [
@@ -13,6 +14,7 @@ LANGUAGES = [
     ('fr', 'Français'),
     ('de', 'Deutsch'),
     ('it', 'Italiano'),
+    ('zh', '简体中文'),
     ('ja', '日本語'),
 ]
 
@@ -22,6 +24,8 @@ def language_code(value=''):
         return value
     current = locale.getlocale()[0] or 'en'
     code = current.split('_', 1)[0].lower()
+    if code.startswith('chinese'):  # Windows names it "Chinese (Simplified)_China"
+        return 'zh'
     return code if code in TRANSLATIONS else 'en'
 
 
@@ -373,6 +377,9 @@ TRANSLATIONS = {
 
 for _code, _translations in EXTRA_TRANSLATIONS.items():
     TRANSLATIONS[_code] = {**shared_translations(_code), **_translations}
+
+# Simplified Chinese: the shared bbport texts plus the Uncharted ones in uncharted_i18n_zh.py.
+TRANSLATIONS['zh'] = {**shared_translations('zh'), **ZH_TRANSLATIONS}
 
 
 def translate(language, text):

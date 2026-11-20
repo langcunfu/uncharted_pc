@@ -25,6 +25,8 @@ code runs directly on your PC and the graphics are translated to Vulkan. Unpack 
 - Trophies: the games' own trophy lists in the launcher, and a notice in the game when you earn one.
 - Button prompts for keyboard and mouse, Xbox or PlayStation controllers; controller vibration settings.
 - Cheats page (infinite health and ammo per game), launcher languages, your own covers and Steam art.
+
+- Launcher in Simplified Chinese (简体中文) besides English, Spanish, Portuguese, French, German, Italian and Japanese: pick it in Advanced → Interface language. The launcher draws Chinese text with a Windows Chinese font (Microsoft YaHei), and the console language on the Game page sets the games themselves to Chinese (Simplified) or Chinese (Traditional) text and speech.
 - A Fixes page for fixes that cost speed: Automatic turns each one on only where it helps.
 - Add to Steam and desktop shortcuts from the launcher, automatic updates.
 

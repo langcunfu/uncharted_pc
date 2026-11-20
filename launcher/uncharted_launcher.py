@@ -635,10 +635,21 @@ class Launcher:
                     pass
         if not font_path('Cinzel-Bold.ttf'):
             self.brand_family = 'Georgia'
+        import tkinter.font as tkfont
+        families = set(tkfont.families(self.root))
+        # Simplified Chinese: Cinzel has no CJK glyphs, so headings drawn with it ("UNCHARTED" stays
+        # in Cinzel) use a Windows Chinese font instead.
+        cjk = None
+        if UI_LANGUAGE == 'zh':
+            cjk = next((f for f in ('Microsoft YaHei UI', 'Microsoft YaHei', 'SimHei', 'SimSun')
+                        if f in families), None)
+        self.section_family = cjk or self.brand_family
         self.font_brand_xl = (self.brand_family, 24, 'bold')
         self.font_brand_lg = (self.brand_family, 18, 'bold')
         self.font_brand_md = (self.brand_family, 13, 'bold')
         self.font_brand_sm = (self.brand_family, 10)
+        self.font_heading = (self.section_family, 10, 'bold')
+        self.font_hero_sm = (self.section_family, 10)
         self.font_ui = ('Segoe UI', 10)
         self.font_ui_sm = ('Segoe UI', 9)
         self.font_ui_md = ('Segoe UI Semibold', 10)
@@ -646,8 +657,6 @@ class Launcher:
         self.font_play = ('Segoe UI Semibold', 13)
         self.font_title = ('Segoe UI Semibold', 22)
         self.font_card = ('Segoe UI Semibold', 9)
-        import tkinter.font as tkfont
-        families = set(tkfont.families(self.root))
         icons = next((f for f in ('Segoe Fluent Icons', 'Segoe MDL2 Assets') if f in families), None)
         self.font_icon = (icons, 13) if icons else None
         self.font_icon_sm = (icons, 11) if icons else None
@@ -676,6 +685,10 @@ class Launcher:
         s = self.ttk.Style(self.root)
         s.theme_use('clam')
         self.check_images()
+        try:  # a second call (interface language switch) replaces the element made before
+            self.root.tk.call('ttk::style', 'element', 'delete', 'Nd.indicator')
+        except self.tk.TclError:
+            pass
         s.element_create('Nd.indicator', 'image', self.check_off, ('selected', self.check_on), sticky='')
         s.layout('TCheckbutton', [('Checkbutton.padding', {'sticky': 'nswe', 'children': [
             ('Nd.indicator', {'side': 'left', 'sticky': ''}),
@@ -696,7 +709,7 @@ class Launcher:
         s.configure('Muted.TLabel', background=CARD, foreground=MUTED, font=('Segoe UI', 9))
         s.configure('ShellMuted.TLabel', background=SURFACE, foreground=MUTED, font=('Segoe UI', 9))
         s.configure('Section.TLabel', background=SURFACE, foreground=GOLD_DIM,
-                    font=(self.brand_family, 10, 'bold'))
+                    font=self.font_heading)
         s.configure('TCheckbutton', background=SURFACE, foreground=TEXT, padding=(0, 3))
         s.map('TCheckbutton', background=[('active', SURFACE)], foreground=[('disabled', MUTED)])
         s.configure('Ghost.TButton', background=CARD, foreground=MUTED, padding=(16, 8), borderwidth=0)
@@ -1295,7 +1308,7 @@ class Launcher:
         sub = (f"{info['id']}  ·  {_('version')} {info['version']}" if info
                else _('Set your game folder on the Game page'))
         c.create_text(self.px(24), h - self.px(14), text=sub, anchor='sw', fill=GOLD,
-                      font=self.font_brand_sm)
+                      font=self.font_hero_sm)
         c.create_text(w - self.px(24), h - self.px(14), text=f'{_(title)}  ·  {_(subtitle)}',
                       anchor='se', fill='#f8eedb', font=self.font_brand_md)
         label = _('Change image')
@@ -1898,6 +1911,8 @@ class Launcher:
         for child in self.root.winfo_children():
             child.destroy()
         self.vars = {}
+        self.load_fonts()
+        self.style()
         self.build()
         self.show(page)
         self.refresh()
