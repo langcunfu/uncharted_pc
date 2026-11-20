@@ -115,7 +115,10 @@ jobs:
           export WINPYTHON="$(cygpath -m "$pythonLocation")/python.exe"
           echo "Python: $WINPYTHON"
           ls -l "$WINPYTHON"
-          /usr/bin/bash packaging/windows/package.sh
+          echo "fonts=[$(cygpath -w "$PWD/launcher/fonts")]"
+          ls -d launcher/fonts launcher/covers
+          mkdir -p out
+          /usr/bin/bash -x packaging/windows/package.sh 2>&1 | tee out/package-stdout.log
 
       - name: 读取版本号
         id: version
