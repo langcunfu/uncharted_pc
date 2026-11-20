@@ -46,12 +46,13 @@ jobs:
           fetch-depth: 1
 
       - name: 安装 MSYS2 CLANG64 工具链
+        id: msys2
         uses: msys2/setup-msys2@v2
         with:
           msystem: CLANG64
           update: true
           install: >-
-            git patch gawk
+            git patch gawk diffutils
             mingw-w64-clang-x86_64-toolchain
             mingw-w64-clang-x86_64-llvm-tools
             mingw-w64-clang-x86_64-cmake
@@ -87,6 +88,7 @@ jobs:
         shell: msys2 {0}
         env:
           BB_PGO: ${{ github.event.inputs.pgo }}
+          MSYS2_ROOT: ${{ steps.msys2.outputs.msys2-location }}
         run: |
           set -x
           uname -a
@@ -98,10 +100,11 @@ jobs:
           /usr/bin/bash --version 2>&1 | head -1 || true
           ls -l build.sh msys2-env.sh packaging/windows/package.sh
           # 防止 actions/checkout 在 Windows 上把脚本转成 CRLF（会让 bash 报 127 / bad interpreter）
-          for t in awk gawk clang clang++ llvm-profdata llvm-strip cmp; do command -v "$t" >/dev/null && echo "ok  $t" || echo "MISSING $t"; done
+          ls -d /c/msys64 >/dev/null 2>&1 && echo "警告：/c/msys64 存在（旧 MSYS2）" || echo "no /c/msys64"
+          for t in awk gawk clang clang++ llvm-profdata llvm-strip cmp; do command -v "$t" >/dev/null && echo "ok  $t -> $(command -v $t)" || echo "MISSING $t"; done
           echo '#include <version>' | clang++ -x c++ -dM -E - 2>&1 | grep -m1 _LIBCPP_VERSION || echo "libc++ probe failed"
           sed -i 's/\r$//' build.sh msys2-env.sh packaging/windows/package.sh
-          /usr/bin/bash build.sh
+          /usr/bin/bash -x build.sh 2>&1 | tee out/build-stdout.log
 
       - name: 冻结启动器并打包
         shell: msys2 {0}
