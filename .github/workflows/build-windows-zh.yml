@@ -81,7 +81,7 @@ jobs:
       - name: 准备 python.org 的 Windows Python（冻结启动器用）
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.14"
           architecture: x64
 
       - name: 编译 C++ 运行时
@@ -107,6 +107,24 @@ jobs:
           mkdir -p out
           set -o pipefail
           /usr/bin/bash -x build.sh 2>&1 | tee out/build-stdout.log
+
+      - name: 拉取 FSR4 资源并编译 DLSS 桥
+        shell: msys2 {0}
+        env:
+          MSYS2_ROOT: ${{ steps.msys2.outputs.msys2-location }}
+        run: |
+          set -euxo pipefail
+          bash tools/fetch_fsr4_assets.sh
+          ls fsr4_shaders | wc -l
+          git clone --depth 1 https://github.com/NVIDIA/DLSS /tmp/DLSS
+          # build_dlss.sh 把 MSYS2 头文件路径写死成 /c/msys64/clang64，runner 那份是旧安装
+          mkdir -p /c/msys64/clang64/include
+          [[ -d /c/msys64/clang64/include/vulkan ]] || cp -r /clang64/include/vulkan /c/msys64/clang64/include/
+          [[ -d /c/msys64/clang64/include/vk_video ]] || cp -r /clang64/include/vk_video /c/msys64/clang64/include/
+          export DLSS_SDK_ROOT=/tmp/DLSS
+          if [[ -x "/c/Program Files/CMake/bin/cmake.exe" ]]; then export CMAKE_EXE="/c/Program Files/CMake/bin/cmake.exe"; fi
+          bash packaging/windows/build_dlss.sh
+          ls -l out/nvngx_dlss.dll out/nvngx_dlssg.dll out/bbport_dlss.dll
 
       - name: 冻结启动器并打包
         shell: msys2 {0}
@@ -160,6 +178,7 @@ jobs:
             - Uncharted.exe（启动器，界面语言可切「简体中文」；自动识别中文 Windows）
             - Play Uncharted.exe、bb-probe.exe、bb-gpu-capabilities.exe 与所需 DLL
             - 三部作品共用一个启动器：Drake's Fortune / Among Thieves / Drake's Deception
+            - 可选超分：FSR 3.1（内置）、FSR 4（含 v07 模型资源）、DLSS / DLSS 帧生成（NVIDIA RTX）
 
             ### 中文相关
             - 高级页 → 界面语言 → 简体中文（或保留「自动」）
