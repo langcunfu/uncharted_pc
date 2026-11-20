@@ -87,14 +87,27 @@ jobs:
         env:
           BB_PGO: ${{ github.event.inputs.pgo }}
         run: |
-          bash build.sh
+          set -x
+          uname -a
+          pwd
+          echo "MSYS2_ROOT=${MSYS2_ROOT:-unset}"
+          echo "PATH=$PATH"
+          ls -l /usr/bin/bash* 2>&1 | head -5
+          command -v bash || true
+          /usr/bin/bash --version 2>&1 | head -1 || true
+          ls -l build.sh msys2-env.sh packaging/windows/package.sh
+          # 防止 actions/checkout 在 Windows 上把脚本转成 CRLF（会让 bash 报 127 / bad interpreter）
+          sed -i 's/\r$//' build.sh msys2-env.sh packaging/windows/package.sh
+          /usr/bin/bash -x build.sh
 
       - name: 冻结启动器并打包
         shell: msys2 {0}
         run: |
+          sed -i 's/\r$//' packaging/windows/package.sh
           export WINPYTHON="$(cygpath -m "$pythonLocation")/python.exe"
           echo "Python: $WINPYTHON"
-          bash packaging/windows/package.sh
+          ls -l "$WINPYTHON"
+          /usr/bin/bash packaging/windows/package.sh
 
       - name: 读取版本号
         id: version
