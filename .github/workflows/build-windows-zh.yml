@@ -104,6 +104,8 @@ jobs:
           for t in awk gawk clang clang++ llvm-profdata llvm-strip cmp; do command -v "$t" >/dev/null && echo "ok  $t -> $(command -v $t)" || echo "MISSING $t"; done
           echo '#include <version>' | clang++ -x c++ -dM -E - 2>&1 | grep -m1 _LIBCPP_VERSION || echo "libc++ probe failed"
           sed -i 's/\r$//' build.sh msys2-env.sh packaging/windows/package.sh
+          mkdir -p out
+          set -o pipefail
           /usr/bin/bash -x build.sh 2>&1 | tee out/build-stdout.log
 
       - name: 冻结启动器并打包
